@@ -1,0 +1,13 @@
+newmtl white
+Ka 1.00 1.00 1.00
+Kd 1.00 1.00 1.00
+Ks 1.00 1.00 1.00
+Ns 1
+illum 1
+
+newmtl pink
+Ka 1.00 0.80 0.80
+Kd 1.00 0.80 0.80
+Ks 1.00 0.80 0.80
+Ns 1
+illum 1
