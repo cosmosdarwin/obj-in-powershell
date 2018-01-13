@@ -3,11 +3,13 @@ $FilePath = "wine-glass-with-shading.obj"
 $N_h = 200 # Level of detail along H (height) axis
 $N_r = 40 # Level of detail along R (radial) axis
 
-"# Crate & Barrel wine glass" | Out-File -FilePath $FilePath -Encoding ascii
-"# Radial symmetry .obj generator in PowerShell" | Add-Content $FilePath
-"# @cosmosdarwin on GitHub/Twitter, 2018" | Add-Content $FilePath
 
-"mtllib wine-glass-materials.mtl" | Add-Content $FilePath
+$outbuffer = @()
+$outbuffer += "# Crate & Barrel wine glass" 
+$outbuffer += "# Radial symmetry .obj generator in PowerShell"
+$outbuffer += "# @cosmosdarwin on GitHub/Twitter, 2018" 
+
+$outbuffer += "mtllib wine-glass-materials.mtl"
 
 Function ConvertTo-UnitVector {
     <#
@@ -96,10 +98,10 @@ Function Add-RingToCylindroid {
         $A = $_ / $N_r * 2 * [Math]::Pi
         $X = [Math]::Round([Math]::Cos($A) * $R, 3)
         $Z = [Math]::Round([Math]::Sin($A) * $R, 3)
-        "v $X $H $Z" | Add-Content $FilePath
+        "v $X $H $Z" 
         # Scale the radial plane (X, Z) components to the profile plane dR component
         $RadialPlaneNormal = ConvertTo-UnitVector -InputVector @($X, $Z) -OutputMagnitude $dR
-        "vn $($RadialPlaneNormal[0]) $dH $($RadialPlaneNormal[1])" | Add-Content $FilePath
+        "vn $($RadialPlaneNormal[0]) $dH $($RadialPlaneNormal[1])" 
     }
 
     # Unless this is the first ring, connect to prior ring with quadrilateral sidewalls
@@ -109,9 +111,9 @@ Function Add-RingToCylindroid {
             $v2 = $_ + 1
             $v3 = $_ + 1 -$N_r
             $v4 = $_ - $N_r
-            "f $v1//$v1 $v2//$v2 $v3//$v3 $v4//$v4" | Add-Content $FilePath
+            "f $v1//$v1 $v2//$v2 $v3//$v3 $v4//$v4"
         }
-        "f -1//-1 $(-$N_r)//$(-$N_r) $(-2*$N_r)//$(-2*$N_r) $(-$N_r-1)//$(-$N_r-1)" | Add-Content $FilePath # Last quadrilateral closes ring
+        "f -1//-1 $(-$N_r)//$(-$N_r) $(-2*$N_r)//$(-2*$N_r) $(-$N_r-1)//$(-$N_r-1)" # Last quadrilateral closes ring
     }
 }
 
@@ -138,10 +140,10 @@ $N_h..0 | ForEach {
     ElseIf (($H -Ge 9.95) -And ($H -Le 10.00)) { $GlassProfile += ,@(Measure-PointOnGuideCircle -CircleCenter @(9.95, 1.30) -CircleRadius 0.05 -H $H) }
 }
 
-"usemtl glass" | Add-Content $FilePath
+$outbuffer += "usemtl glass"
 
 # Create cylindroid ring-by-ring by iterating through points on the profile curve
-$GlassProfile | ForEach {
+$outbuffer += $GlassProfile | ForEach {
     If ([array]::indexof($GlassProfile, $_) -Eq 0) { # First
         Add-RingToCylindroid -FilePath $FilePath -N $N_r -ProfilePointAndNormal $_ -First
     }
@@ -150,7 +152,7 @@ $GlassProfile | ForEach {
     }
 }
 
-"f $(-$N_r..-1)" | Add-Content $FilePath # Add base to close the cylindroid
+$outbuffer += "f $(-$N_r..-1)" # Add base to close the cylindroid
 
 ######################
 ### Object 2: Wine ###
@@ -164,10 +166,10 @@ $WineProfile = @() # List of points (h, r) along the profile, and normal (dH, dR
     If (($H -Ge 5.40) -And ($H -Le  7.00)) { $WineProfile += ,@(Measure-PointOnGuideCircle -CircleCenter @(7.20, 0.00) -CircleRadius 1.80 -H $H) }
 }
 
-"usemtl wine" | Add-Content $FilePath
+$outbuffer += "usemtl wine"
 
 # Create cylindroid ring-by-ring by iterating through points on the profile curve
-$WineProfile | ForEach {
+$outbuffer += $WineProfile | ForEach {
     If ([array]::indexof($WineProfile, $_) -Eq 0) { # First
         Add-RingToCylindroid -FilePath $FilePath -N $N_r -ProfilePointAndNormal $_ -First
     }
@@ -176,4 +178,6 @@ $WineProfile | ForEach {
     }
 }
 
-"f $(-$N_r..-1)" | Add-Content $FilePath # Add base to close the cylindroid
+$outbuffer += "f $(-$N_r..-1)" # Add base to close the cylindroid
+
+$outbuffer | Out-File -FilePath $FilePath -Encoding ascii
